@@ -1,0 +1,5 @@
+
+Ack 0 = \n . succ n = succ
+Ack m = \n . R ("Ack (m-1)" 1) (\r y . "Ack (m-1)" r) n
+
+Ack = \m . R succ (\f x . \n . R (f 1) (\r y . f r) n) m
