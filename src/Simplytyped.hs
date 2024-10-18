@@ -20,9 +20,35 @@ import           Common
 -- conversion
 -----------------------
 
+data BST a = BE | BN a Int (BST a) (BST a)
+
 -- conversion a términos localmente sin nombres
 conversion :: LamTerm -> Term
-conversion = undefined
+conversion t = conversion' t BE
+
+conversion' :: LamTerm -> BST String -> Term
+conversion' (LVar str) tree = let d = distance str tree
+                              in if d /= -1 then Bound d else Free (Global str)
+conversion' (LApp t1 t2) tree = (conversion' t1 tree) :@: (conversion' t2 tree)
+conversion' (LAbs str typeName term) tree = let tree1 = increaseDistance tree
+                                                tree2 = addTotree str tree1
+                                            in Lam typeName (conversion' term tree2)
+
+distance :: String -> BST String -> Int
+distance str BE = -1
+distance str (BN a d l r) | str < a = distance str l
+                          | str > a = distance str r
+                          | otherwise = d
+
+addTotree :: String -> BST String -> BST String
+addTotree str BE = (BN str 0 BE BE)
+addTotree str (BN a d l r) | str < a = BN a d (addTotree str l) r
+                           | str > a = BN a d l (addTotree str r)
+                           | otherwise = BN a 0 l r
+
+increaseDistance :: BST String -> BST String
+increaseDistance BE = BE
+increaseDistance (BN a d l r) = BN a (d+1) (increaseDistance l) (increaseDistance r)
 
 ----------------------------
 --- evaluador de términos
