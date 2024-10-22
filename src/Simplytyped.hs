@@ -68,7 +68,14 @@ quote (VLam t f) = Lam t f
 
 -- evalúa un término en un entorno dado
 eval :: NameEnv Value Type -> Term -> Value
-eval = undefined
+eval (x:xs) (Free n) = let (name, (v, _)) = x in if name == n then v else eval xs (Free n)
+eval _ (Bound _) = error "No se puede evaluar una variable ligada"
+eval nvs (Lam dt t) = VLam dt t
+eval nvs (t1 :@: t2) = let v1 = eval nvs t1
+                           v2 = eval nvs t2
+                       in case v1 of
+                            VLam dt t -> eval nvs (sub 0 t2 t)
+                            _ -> error "No se pudo evaluar la aplicación"
 
 
 
