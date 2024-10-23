@@ -49,9 +49,8 @@ Exp     :: { LamTerm }
 
 Nat     :: { LamTerm }
         : '0'                          { LZero }
-        | 'suc' Nat                    { LSuc $2 }
-        | 'R' Nat Nat Nat              { LRec $2 $3 $4 }
-        | '(' Nat ')'                  { $2 }
+        | 'suc' Exp                    { LSuc $2 }
+        | 'R' Parens Parens Parens     { LRec $2 $3 $4 }
         
 NAbs    :: { LamTerm }
         : NAbs Atom                    { LApp $1 $2 }
@@ -59,7 +58,10 @@ NAbs    :: { LamTerm }
 
 Atom    :: { LamTerm }
         : VAR                          { LVar $1 }  
-        | '(' Exp ')'                  { $2 }
+        | Parens                       { $1 }
+
+Parens  :: { LamTerm }
+        : '(' Exp ')'                  { $2 }
 
 Type    : TYPEE                        { EmptyT }
         | TYPENAT                      { NatT }
@@ -119,6 +121,9 @@ data Token = TVar String
 lexer cont s = case s of
                     [] -> cont TEOF []
                     ('\n':s)  ->  \line -> lexer cont s (line + 1)
+                    ('0':cs) -> cont TZero cs
+                    ('s':('u':('c':cs))) -> cont TSuc cs
+                    ('R':cs) -> cont TRec cs
                     (c:cs)
                           | isSpace c -> lexer cont cs
                           | isAlpha c -> lexVar (c:cs)
@@ -126,9 +131,6 @@ lexer cont s = case s of
                     ('{':('-':cs)) -> consumirBK 0 0 cont cs	
                     ('-':('}':cs)) -> \ line -> Failed $ "Línea "++(show line)++": Comentario no abierto"
                     ('-':('>':cs)) -> cont TArrow cs
-                    ('0':cs) -> cont TZero cs
-                    ('s':('u':('c':cs))) -> cont TSuc cs
-                    ('R':cs) -> cont TRec cs
                     ('\\':cs)-> cont TAbs cs
                     ('.':cs) -> cont TDot cs
                     ('(':cs) -> cont TOpen cs

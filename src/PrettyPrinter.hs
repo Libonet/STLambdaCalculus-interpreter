@@ -38,16 +38,12 @@ pp ii vs (Lam t c) =
     <> text ". "
     <> pp (ii + 1) vs c
 pp ii vs (Zero)  = text "0"
-pp ii vs (Suc t) = text $ show $ unrollSuc (Suc t)
+pp ii vs (Suc t) = text "suc" <+> pp ii vs t
 pp ii vs (Rec t1 t2 t3) = 
-  text "R"
-    <> pp ii vs t1
-    <> pp ii vs t2
-    <> pp ii vs t3
-
-unrollSuc Zero    = 0
-unrollSuc (Suc t) = 1 + (unrollSuc t)
-
+  text "R "
+    <+> text "(" <> pp ii vs t1 <> text ")"
+    <+> text "(" <> pp ii vs t2 <> text ")"
+    <+> text "(" <> pp ii vs t3 <> text ")"
 
 isLam :: Term -> Bool
 isLam (Lam _ _) = True
@@ -72,6 +68,9 @@ isFun _          = False
 fv :: Term -> [String]
 fv (Bound _         ) = []
 fv (Free  (Global n)) = [n]
+fv (Zero) = ["0"]
+fv (Suc n) = "suc" : (fv n)
+fv (Rec t1 t2 t3) = "R":(fv t1) ++ fv t2 ++ fv t3
 fv (t   :@: u       ) = fv t ++ fv u
 fv (Lam _   u       ) = fv u
 

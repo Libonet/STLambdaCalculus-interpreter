@@ -72,26 +72,32 @@ sub i t (Lam t'  u)           = Lam t' (sub (i + 1) t u)
 -- convierte un valor en el término equivalente
 quote :: Value -> Term
 quote (VLam t f) = Lam t f
+quote (VNum NZero) = Zero
+quote (VNum (NSuc n)) = Suc (quote (VNum n))
 
 -- evalúa un término en un entorno dado
 eval :: NameEnv Value Type -> Term -> Value
-eval (x:xs) (Free n)    = let (name, (v, _)) = x in if name == n then v else eval xs (Free n)
-eval _ (Bound _)        = error "No se puede evaluar una variable ligada"
-eval nvs (Lam dt t)     = VLam dt t
-eval nvs (Zero)         = VNum NZero
-eval nvs (Suc t)        = let t' = eval nvs t
-                          in case t' of
-                               VNum t'' -> VNum (NSuc t'')
-                               _        -> error "No se pudo evaluar el Nat"
+eval (x:xs) (Free n)         = let (name, (v, _)) = x in if name == n then v else eval xs (Free n)
+eval _ (Bound _)             = error "No se puede evaluar una variable ligada"
+eval nvs (Lam dt t)          = VLam dt t
+eval nvs (Zero)              = VNum NZero
+eval nvs s@(Suc t)           = VNum (unrollSuc nvs s)
 eval nvs (Rec t1 t2 Zero)    = eval nvs t1
-eval nvs (Rec t1 t2 (Suc t)) = eval nvs (t2 :@: (Rec t1 t2 t) :@: t)
-eval nvs (t1 :@: t2)    = let v1 = eval nvs t1
-                              v2 = eval nvs t2
-                          in case v1 of
-                               VLam dt t -> eval nvs (sub 0 t2 t)
-                               _ -> error "No se pudo evaluar la aplicación"
+eval nvs (Rec t1 t2 (Suc t)) = eval nvs ((t2 :@: (Rec t1 t2 t)) :@: t)
+eval nvs (Rec t1 t2 _)       = error "No se pudo evaluar Rec"
+eval nvs (t1 :@: t2)         = let v1 = eval nvs t1
+                                   v2 = eval nvs t2
+                               in case v1 of
+                                    VLam dt t -> eval nvs (sub 0 t2 t)
+                                    _ -> error "No se pudo evaluar la aplicación"
 
-
+unrollSuc :: NameEnv Value Type -> Term -> NumVal
+unrollSuc nvs Zero    = NZero
+unrollSuc nvs (Suc t) = NSuc (unrollSuc nvs t)
+unrollSuc nvs t       = case eval nvs t of
+                          VNum NZero     -> NZero
+                          VNum (NSuc t') -> NSuc t'
+                          _              -> error "No se pudo evaluar Suc"
 
 ----------------------
 --- type checker
@@ -139,5 +145,15 @@ infer' c e (t :@: u) = infer' c e t >>= \tt -> infer' c e u >>= \tu ->
     FunT t1 t2 -> if (tu == t1) then ret t2 else matchError t1 tu
     _          -> notfunError tt
 infer' c e (Lam t u) = infer' (t : c) e u >>= \tu -> ret $ FunT t tu
-
-
+infer' c e Zero = ret NatT
+infer' c e (Suc t) = infer' c e t >>= \tt -> if (tt == NatT) then ret NatT else matchError NatT tt
+infer' c e (Rec t1 t2 t3) = infer' c e t1 >>= 
+    \tt1 -> infer' c e t2 >>=
+    \tt2 -> infer' c e t3 >>=
+    \tt3 -> case tt3 of
+              NatT -> case tt2 of
+                        FunT t (FunT NatT t') -> if (t==tt1 && t'==tt1) 
+                                                 then ret t
+                                                 else matchError (FunT tt1 (FunT NatT tt1)) tt2
+                        _                    -> matchError (FunT tt1 (FunT NatT tt1)) tt2
+              _    -> matchError NatT tt2
