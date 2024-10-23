@@ -37,6 +37,16 @@ pp ii vs (Lam t c) =
     <> printType t
     <> text ". "
     <> pp (ii + 1) vs c
+pp ii vs (Zero)  = text "0"
+pp ii vs (Suc t) = text $ show $ unrollSuc (Suc t)
+pp ii vs (Rec t1 t2 t3) = 
+  text "R"
+    <> pp ii vs t1
+    <> pp ii vs t2
+    <> pp ii vs t3
+
+unrollSuc Zero    = 0
+unrollSuc (Suc t) = 1 + (unrollSuc t)
 
 
 isLam :: Term -> Bool
@@ -50,6 +60,7 @@ isApp _         = False
 -- pretty-printer de tipos
 printType :: Type -> Doc
 printType EmptyT = text "E"
+printType NatT   = text "Nat"
 printType (FunT t1 t2) =
   sep [parensIf (isFun t1) (printType t1), text "->", printType t2]
 

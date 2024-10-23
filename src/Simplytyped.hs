@@ -33,6 +33,10 @@ conversion' (LApp t1 t2) tree = (conversion' t1 tree) :@: (conversion' t2 tree)
 conversion' (LAbs str typeName term) tree = let tree1 = increaseDistance tree
                                                 tree2 = addTotree str tree1
                                             in Lam typeName (conversion' term tree2)
+conversion' (LZero) tree = Zero
+conversion' (LSuc t) tree = Suc (conversion' t tree)
+conversion' (LRec t1 t2 t3) tree = Rec (conversion' t1 tree) (conversion' t2 tree) (conversion' t3 tree)
+
 
 distance :: String -> BST String -> Int
 distance str BE = -1
@@ -60,6 +64,9 @@ sub i t (Bound j) | i == j    = t
 sub _ _ (Bound j) | otherwise = Bound j
 sub _ _ (Free n   )           = Free n
 sub i t (u   :@: v)           = sub i t u :@: sub i t v
+sub i t (Zero)                = Zero
+sub i t (Suc t')              = Suc (sub i t t')
+sub i t (Rec t1 t2 t3)        = Rec (sub i t t1) (sub i t t2) (sub i t t3) 
 sub i t (Lam t'  u)           = Lam t' (sub (i + 1) t u)
 
 -- convierte un valor en el término equivalente
@@ -68,15 +75,21 @@ quote (VLam t f) = Lam t f
 
 -- evalúa un término en un entorno dado
 eval :: NameEnv Value Type -> Term -> Value
-eval (x:xs) (Free n) = let (name, (v, _)) = x in if name == n then v else eval xs (Free n)
-eval _ (Bound _) = error "No se puede evaluar una variable ligada"
-eval nvs (Lam dt t) = VLam dt t
-eval nvs (t1 :@: t2) = let v1 = eval nvs t1
-                           v2 = eval nvs t2
-                       in case v1 of
-                            VLam dt t -> eval nvs (sub 0 t2 t)
-                            _ -> error "No se pudo evaluar la aplicación"
-
+eval (x:xs) (Free n)    = let (name, (v, _)) = x in if name == n then v else eval xs (Free n)
+eval _ (Bound _)        = error "No se puede evaluar una variable ligada"
+eval nvs (Lam dt t)     = VLam dt t
+eval nvs (Zero)         = VNum NZero
+eval nvs (Suc t)        = let t' = eval nvs t
+                          in case t' of
+                               VNum t'' -> VNum (NSuc t'')
+                               _        -> error "No se pudo evaluar el Nat"
+eval nvs (Rec t1 t2 Zero)    = eval nvs t1
+eval nvs (Rec t1 t2 (Suc t)) = eval nvs (t2 :@: (Rec t1 t2 t) :@: t)
+eval nvs (t1 :@: t2)    = let v1 = eval nvs t1
+                              v2 = eval nvs t2
+                          in case v1 of
+                               VLam dt t -> eval nvs (sub 0 t2 t)
+                               _ -> error "No se pudo evaluar la aplicación"
 
 
 

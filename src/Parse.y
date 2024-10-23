@@ -22,13 +22,18 @@ import Data.Char
     '('     { TOpen }
     ')'     { TClose }
     '->'    { TArrow }
+    '0'     { TZero }
+    'suc'   { TSuc }
+    'R'     { TRec }
     VAR     { TVar $$ }
     TYPEE   { TTypeE }
+    TYPENAT { TTypeNAT }
     DEF     { TDef }
     
 
 %left '=' 
 %right '->'
+%right 'suc' 'R'
 %right '\\' '.' 
 
 %%
@@ -39,7 +44,14 @@ Defexp  : DEF VAR '=' Exp              { Def $2 $4 }
 
 Exp     :: { LamTerm }
         : '\\' VAR ':' Type '.' Exp    { LAbs $2 $4 $6 }
+        | Nat                          { $1 }
         | NAbs                         { $1 }
+
+Nat     :: { LamTerm }
+        : '0'                          { LZero }
+        | 'suc' Nat                    { LSuc $2 }
+        | 'R' Nat Nat Nat              { LRec $2 $3 $4 }
+        | '(' Nat ')'                  { $2 }
         
 NAbs    :: { LamTerm }
         : NAbs Atom                    { LApp $1 $2 }
@@ -50,6 +62,7 @@ Atom    :: { LamTerm }
         | '(' Exp ')'                  { $2 }
 
 Type    : TYPEE                        { EmptyT }
+        | TYPENAT                      { NatT }
         | Type '->' Type               { FunT $1 $3 }
         | '(' Type ')'                 { $2 }
 
@@ -87,6 +100,7 @@ happyError = \ s i -> Failed $ "Línea "++(show (i::LineNumber))++": Error de pa
 
 data Token = TVar String
                | TTypeE
+               | TTypeNAT
                | TDef
                | TAbs
                | TDot
@@ -94,6 +108,9 @@ data Token = TVar String
                | TClose 
                | TColon
                | TArrow
+               | TZero
+               | TSuc
+               | TRec
                | TEquals
                | TEOF
                deriving Show
@@ -109,6 +126,9 @@ lexer cont s = case s of
                     ('{':('-':cs)) -> consumirBK 0 0 cont cs	
                     ('-':('}':cs)) -> \ line -> Failed $ "Línea "++(show line)++": Comentario no abierto"
                     ('-':('>':cs)) -> cont TArrow cs
+                    ('0':cs) -> cont TZero cs
+                    ('s':('u':('c':cs))) -> cont TSuc cs
+                    ('R':cs) -> cont TRec cs
                     ('\\':cs)-> cont TAbs cs
                     ('.':cs) -> cont TDot cs
                     ('(':cs) -> cont TOpen cs
@@ -120,6 +140,7 @@ lexer cont s = case s of
                      "Línea "++(show line)++": No se puede reconocer "++(show $ take 10 unknown)++ "..."
                     where lexVar cs = case span isAlpha cs of
                               ("E",rest)    -> cont TTypeE rest
+                              ("NAT",rest)  -> cont TTypeNAT rest
                               ("def",rest)  -> cont TDef rest
                               (var,rest)    -> cont (TVar var) rest
                           consumirBK anidado cl cont s = case s of
