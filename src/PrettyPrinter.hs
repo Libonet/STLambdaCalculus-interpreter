@@ -48,6 +48,7 @@ pp ii vs (Rec t1 t2 t3) =
     <+> parens (pp ii vs t1)
     <+> parens (pp ii vs t2)
     <+> parens (pp ii vs t3)
+pp ii vs (Let t1 t2) = text "let" <+> text (vs !! ii) <> text "=" <> pp (ii + 1) vs t1 <+> text "in" <+> pp (ii + 1) vs t2
 
 fromSucToInt :: Int -> [String] -> Term -> (Int, Doc, String)
 fromSucToInt ii vs Zero      = (0, text "0", "0")
@@ -80,11 +81,12 @@ isFun _          = False
 fv :: Term -> [String]
 fv (Bound _         ) = []
 fv (Free  (Global n)) = [n]
-fv (Zero) = ["0"]
-fv (Suc n) = "suc" : (fv n)
-fv (Rec t1 t2 t3) = "R":(fv t1) ++ fv t2 ++ fv t3
+fv (Zero) = []
+fv (Suc n) = fv n
+fv (Rec t1 t2 t3) = fv t1 ++ fv t2 ++ fv t3
 fv (t   :@: u       ) = fv t ++ fv u
 fv (Lam _   u       ) = fv u
+fv (Let t1 t2) = fv t1 ++ fv t2
 
 ---
 printTerm :: Term -> Doc

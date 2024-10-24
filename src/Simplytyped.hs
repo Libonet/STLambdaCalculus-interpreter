@@ -36,6 +36,9 @@ conversion' (LAbs str typeName term) tree = let tree1 = increaseDistance tree
 conversion' (LZero) tree = Zero
 conversion' (LSuc t) tree = Suc (conversion' t tree)
 conversion' (LRec t1 t2 t3) tree = Rec (conversion' t1 tree) (conversion' t2 tree) (conversion' t3 tree)
+conversion' (LLet str t1 t2) tree = let tree1 = increaseDistance tree
+                                        tree2 = addTotree str tree1
+                                    in Let (conversion' t1 tree2) (conversion' t2 tree2) -- ??????????????????????????????????????????????????????????????????
 
 
 distance :: String -> BST String -> Int
@@ -68,6 +71,7 @@ sub i t (Zero)                = Zero
 sub i t (Suc t')              = Suc (sub i t t')
 sub i t (Rec t1 t2 t3)        = Rec (sub i t t1) (sub i t t2) (sub i t t3) 
 sub i t (Lam t'  u)           = Lam t' (sub (i + 1) t u)
+sub i t (Let t1 t2)           = Let (sub (i + 1) t t1) (sub (i + 1) t t2) -- i ó i+1 ???????????????????????????????????????????????????
 
 -- convierte un valor en el término equivalente
 quote :: Value -> Term
@@ -87,13 +91,16 @@ eval nvs (Rec t1 t2 (Suc t)) = eval nvs ((t2 :@: (Rec t1 t2 t)) :@: t)
 eval nvs (Rec t1 t2 t3)      = case eval nvs t3 of
                                  VNum t -> eval nvs (Rec t1 t2 (quote (VNum t)))
                                  _      -> error "No se pudo evaluar Rec"
-eval nvs (t1 :@: t2)         = let v1 = eval nvs t1
-                                   v2 = eval nvs t2
-                               in case v1 of
-                                    VLam dt t -> eval nvs (sub 0 t2 t)
-                                    _ -> error "No se pudo evaluar la aplicación"
+eval nvs (t1 :@: t2) = let v1 = eval nvs t1
+                           v2 = eval nvs t2
+                           Lam _ t1' = quote v1
+                           t2' = quote v2
+                       in eval nvs (sub 0 t2' t1')
+eval nvs (Let t1 t2) = let v1 = eval nvs t1
+                           t1' = quote v1
+                       in eval nvs (sub 0 t1' t2)
 
-
+-- let x = exp in t == (\x:expType. t) exp
 
 unrollSuc :: NameEnv Value Type -> Term -> NumVal
 unrollSuc nvs Zero    = NZero
@@ -160,4 +167,7 @@ infer' c e (Rec t1 t2 t3) = infer' c e t1 >>=
                                                  then ret t
                                                  else matchError (FunT tt1 (FunT NatT tt1)) tt2
                         _                    -> matchError (FunT tt1 (FunT NatT tt1)) tt2
-              _    -> matchError NatT tt2
+              _    -> matchError NatT tt3
+infer' c e (Let t1 t2) = infer' c e t1 >>=
+    \tt1 -> infer' (tt1 : c) e t2 >>=
+      \tt2 -> ret tt2
