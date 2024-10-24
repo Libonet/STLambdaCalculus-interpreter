@@ -84,12 +84,16 @@ eval nvs (Zero)              = VNum NZero
 eval nvs s@(Suc t)           = VNum (unrollSuc nvs s)
 eval nvs (Rec t1 t2 Zero)    = eval nvs t1
 eval nvs (Rec t1 t2 (Suc t)) = eval nvs ((t2 :@: (Rec t1 t2 t)) :@: t)
-eval nvs (Rec t1 t2 _)       = error "No se pudo evaluar Rec"
+eval nvs (Rec t1 t2 t3)      = case eval nvs t3 of
+                                 VNum t -> eval nvs (Rec t1 t2 (quote (VNum t)))
+                                 _      -> error "No se pudo evaluar Rec"
 eval nvs (t1 :@: t2)         = let v1 = eval nvs t1
                                    v2 = eval nvs t2
                                in case v1 of
                                     VLam dt t -> eval nvs (sub 0 t2 t)
                                     _ -> error "No se pudo evaluar la aplicación"
+
+
 
 unrollSuc :: NameEnv Value Type -> Term -> NumVal
 unrollSuc nvs Zero    = NZero

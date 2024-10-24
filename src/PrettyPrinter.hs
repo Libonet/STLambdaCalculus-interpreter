@@ -38,12 +38,21 @@ pp ii vs (Lam t c) =
     <> text ". "
     <> pp (ii + 1) vs c
 pp ii vs (Zero)  = text "0"
-pp ii vs (Suc t) = text "suc" <+> pp ii vs t
+pp ii vs s@(Suc t) = let (n, doc) = fromSucToInt ii vs s
+                     in if doc==(text "0") then text (show n)
+                        else text (show n) <> text "+" <> parens doc
 pp ii vs (Rec t1 t2 t3) = 
   text "R "
-    <+> text "(" <> pp ii vs t1 <> text ")"
-    <+> text "(" <> pp ii vs t2 <> text ")"
-    <+> text "(" <> pp ii vs t3 <> text ")"
+    <+> parens (pp ii vs t1)
+    <+> parens (pp ii vs t2)
+    <+> parens (pp ii vs t3)
+
+fromSucToInt :: Int -> [String] -> Term -> (Int, Doc)
+fromSucToInt ii vs Zero    = (0, text "0")
+fromSucToInt ii vs (Suc t) = let (n, rest) = fromSucToInt ii vs t
+                                          in (1+n, rest)
+fromSucToInt ii vs t       = (0, pp ii vs t)
+
 
 isLam :: Term -> Bool
 isLam (Lam _ _) = True

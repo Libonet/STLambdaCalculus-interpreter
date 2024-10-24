@@ -6,6 +6,6 @@ Ack :: Nat -> Nat -> Nat
 Ack = \m . R (succ) (\f x . \n. R (f 1) (\r y . f r) n) m
 -}
 
-def Suma = \x:NAT.\y:NAT. R (x) (\a:NAT.\b:NAT. suc a) (y)
+def Suma = \n:NAT.\m:NAT. R n (\r:NAT.\y:NAT. suc r) m
 
-def Ack = \m:NAT. R (\v:NAT.suc v) (\f:NAT->NAT.\x:NAT. \n:NAT. R (f (suc 0)) (\r:NAT.\y:NAT. f r) (n)) (m)
+def Ack = \m:NAT. R (\v:NAT.suc v) (\f:NAT->NAT.\x:NAT. \n:NAT. R (f (suc 0)) (\r:NAT.\y:NAT. f r) n) m

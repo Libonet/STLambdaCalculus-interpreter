@@ -23,8 +23,8 @@ import Data.Char
     ')'     { TClose }
     '->'    { TArrow }
     '0'     { TZero }
-    'suc'   { TSuc }
-    'R'     { TRec }
+    suc     { TSuc }
+    R       { TRec }
     VAR     { TVar $$ }
     TYPEE   { TTypeE }
     TYPENAT { TTypeNAT }
@@ -33,8 +33,8 @@ import Data.Char
 
 %left '=' 
 %right '->'
-%right 'suc' 'R'
 %right '\\' '.' 
+%right suc R
 
 %%
 
@@ -49,19 +49,16 @@ Exp     :: { LamTerm }
 
 Nat     :: { LamTerm }
         : '0'                          { LZero }
-        | 'suc' Exp                    { LSuc $2 }
-        | 'R' Parens Parens Parens     { LRec $2 $3 $4 }
-        
+        | suc Exp                      { LSuc $2 }
+        | R Atom Atom Atom             { LRec $2 $3 $4 }
+
 NAbs    :: { LamTerm }
         : NAbs Atom                    { LApp $1 $2 }
         | Atom                         { $1 }
-
+        
 Atom    :: { LamTerm }
         : VAR                          { LVar $1 }  
-        | Parens                       { $1 }
-
-Parens  :: { LamTerm }
-        : '(' Exp ')'                  { $2 }
+        | '(' Exp ')'                  { $2 }
 
 Type    : TYPEE                        { EmptyT }
         | TYPENAT                      { NatT }
@@ -122,8 +119,6 @@ lexer cont s = case s of
                     [] -> cont TEOF []
                     ('\n':s)  ->  \line -> lexer cont s (line + 1)
                     ('0':cs) -> cont TZero cs
-                    ('s':('u':('c':cs))) -> cont TSuc cs
-                    ('R':cs) -> cont TRec cs
                     (c:cs)
                           | isSpace c -> lexer cont cs
                           | isAlpha c -> lexVar (c:cs)
@@ -143,6 +138,8 @@ lexer cont s = case s of
                     where lexVar cs = case span isAlpha cs of
                               ("E",rest)    -> cont TTypeE rest
                               ("NAT",rest)  -> cont TTypeNAT rest
+                              ("suc",rest)  -> cont TSuc rest
+                              ("R",rest)    -> cont TRec rest
                               ("def",rest)  -> cont TDef rest
                               (var,rest)    -> cont (TVar var) rest
                           consumirBK anidado cl cont s = case s of
