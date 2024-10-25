@@ -1,3 +1,11 @@
 def I = \x:E. x
 def K = \x:E.\y:E.x
 def S = \x:E->E->E.\y:E->E.\z:E.(x z) (y z)
+
+def Suma = \n:NAT.\m:NAT. R n (\r:NAT.\y:NAT. suc r) m
+
+def Pred = \n:NAT. R (0) (\r:NAT.\y:NAT. y) n
+
+def Resta = \n:NAT.\m:NAT. R n (\r:NAT.\y:NAT. Pred r) m
+
+def Prod = \n:NAT.\m:NAT. R (0) (\r:NAT.\y:NAT. Suma r n) m

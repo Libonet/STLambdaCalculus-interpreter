@@ -1,11 +1,15 @@
 {-
+Ack 0 n = succ n
+Ack m 0 = Ack (m-1) 1
+Ack m n = Ack (m-1) (Ack m (n-1))
+
 Ack 0 = \n . succ n = succ
 Ack m = \n . R ("Ack (m-1)" 1) (\r y . "Ack (m-1)" r) n
+
+"Ack (m-1)" = f
 
 Ack :: Nat -> Nat -> Nat
 Ack = \m . R (succ) (\f x . \n. R (f 1) (\r y . f r) n) m
 -}
-
-def Suma = \n:NAT.\m:NAT. R n (\r:NAT.\y:NAT. suc r) m
 
 def Ack = \m:NAT. R (\v:NAT.suc v) (\f:NAT->NAT.\x:NAT. \n:NAT. R (f (suc 0)) (\r:NAT.\y:NAT. f r) n) m
