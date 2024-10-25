@@ -15,28 +15,33 @@ import Data.Char
 %lexer {lexer} {TEOF}
 
 %token
-    '='     { TEquals }
-    ':'     { TColon }
-    '\\'    { TAbs }
-    '.'     { TDot }
-    '('     { TOpen }
-    ')'     { TClose }
-    '->'    { TArrow }
-    '0'     { TZero }
-    suc     { TSuc }
-    R       { TRec }
-    VAR     { TVar $$ }
-    TYPEE   { TTypeE }
-    TYPENAT { TTypeNAT }
-    DEF     { TDef }
-    LET     { TLet }
-    IN      { TIn }
+    '='      { TEquals }
+    ':'      { TColon }
+    '\\'     { TAbs }
+    '.'      { TDot }
+    '('      { TOpen }
+    ')'      { TClose }
+    '->'     { TArrow }
+    '0'      { TZero }
+    suc      { TSuc }
+    R        { TRec }
+    nil      { TNil }
+    cons     { TCons }
+    RL       { TRecList }
+    VAR      { TVar $$ }
+    TYPEE    { TTypeE }
+    TYPENAT  { TTypeNAT }
+    TYPELIST { TTypeLIST }
+    DEF      { TDef }
+    LET      { TLet }
+    IN       { TIn }
+
     
 
 %left '=' 
 %right '->'
 %right '\\' '.' LET IN
-%right suc R
+%right suc cons RL R
 
 %%
 
@@ -48,12 +53,18 @@ Exp     :: { LamTerm }
         : '\\' VAR ':' Type '.' Exp    { LAbs $2 $4 $6 }
         | LET VAR '=' Exp IN Exp       { LLet $2 $4 $6 }
         | Nat                          { $1 }
+        | NatList                      { $1 }
         | NAbs                         { $1 }
 
 Nat     :: { LamTerm }
         : '0'                          { LZero }
         | suc Exp                      { LSuc $2 }
         | R Atom Atom Atom             { LRec $2 $3 $4 }
+
+NatList :: { LamTerm }
+        : nil                          { LNil }
+        | cons Atom Atom               { LCons $2 $3 }
+        | RL Atom Atom Atom            { LRecL $2 $3 $4 }
 
 NAbs    :: { LamTerm }
         : NAbs Atom                    { LApp $1 $2 }
@@ -103,6 +114,7 @@ happyError = \ s i -> Failed $ "Línea "++(show (i::LineNumber))++": Error de pa
 data Token = TVar String
                | TTypeE
                | TTypeNAT
+               | TTypeLIST
                | TDef
                | TAbs
                | TDot
@@ -113,6 +125,9 @@ data Token = TVar String
                | TZero
                | TSuc
                | TRec
+               | TNil
+               | TCons
+               | TRecList
                | TEquals
                | TEOF
                | TLet
@@ -143,8 +158,12 @@ lexer cont s = case s of
                     where lexVar cs = case span isAlpha cs of
                               ("E",rest)    -> cont TTypeE rest
                               ("NAT",rest)  -> cont TTypeNAT rest
+                              ("ListT",rest)-> cont TTypeLIST rest
                               ("suc",rest)  -> cont TSuc rest
                               ("R",rest)    -> cont TRec rest
+                              ("nil",rest)  -> cont TNil rest
+                              ("cons",rest) -> cont TCons rest
+                              ("RL",rest)   -> cont TRecList rest
                               ("def",rest)  -> cont TDef rest
                               ("let",rest)  -> cont TLet rest
                               ("in",rest)   -> cont TIn rest
