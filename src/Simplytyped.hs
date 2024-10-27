@@ -78,6 +78,8 @@ quote :: Value -> Term
 quote (VLam t f) = Lam t f
 quote (VNum NZero) = Zero
 quote (VNum (NSuc n)) = Suc (quote (VNum n))
+quote (VList VNil) = Nil
+quote (VList (VCons v l)) = Cons (quote (VNum v)) (quote (VList l))
 
 -- evalúa un término en un entorno dado
 eval :: NameEnv Value Type -> Term -> Value
@@ -88,7 +90,7 @@ eval nvs (Zero)              = VNum NZero
 eval nvs s@(Suc t)           = VNum (unrollSuc nvs s)
 eval nvs (Rec t1 t2 Zero)    = eval nvs t1
 eval nvs (Rec t1 t2 (Suc t)) = eval nvs ((t2 :@: (Rec t1 t2 t)) :@: t)
-eval nvs (Rec t1 t2 t3)      = case eval nvs t3 of
+eval nvs (Rec t1 t2 t3)      = case eval nvs t3 of -- Esto se supone que tipo y por lo tatno no deberia no ser un numero. O sea este chequeo es innecesario
                                  VNum t -> eval nvs (Rec t1 t2 (quote (VNum t)))
                                  _      -> error "No se pudo evaluar Rec"
 eval nvs (t1 :@: t2) = let v1 = eval nvs t1
@@ -99,6 +101,19 @@ eval nvs (t1 :@: t2) = let v1 = eval nvs t1
 eval nvs (Let t1 t2) = let v1 = eval nvs t1
                            t1' = quote v1
                        in eval nvs (sub 0 t1' t2)
+eval nvs (Cons t1 t2) = let v1 = quote $ eval nvs t1
+                            t2' = quote $ eval nvs t2
+                        in eval nvs (Cons v1 t2')
+eval nvs (RecL t _ Nil) = eval nvs t
+eval nvs (RecL t1 t2 (Cons n lv)) = eval nvs (t2 :@: n :@: lv :@: RecL t1 t2 lv)
+eval nvs (RecL t1 t2 t3) = let t3' = quote $ eval nvs t3
+                           in eval nvs (RecL t1 t2 t3')
+
+{-
+             | Nil
+             | Cons Term Term
+             | RecL Term Term Term
+-}
 
 unrollSuc :: NameEnv Value Type -> Term -> NumVal
 unrollSuc nvs Zero    = NZero
@@ -169,3 +184,21 @@ infer' c e (Rec t1 t2 t3) = infer' c e t1 >>=
 infer' c e (Let t1 t2) = infer' c e t1 >>=
     \tt1 -> infer' (tt1 : c) e t2 >>=
       \tt2 -> ret tt2
+infer' c e Nil = ret ListT
+infer' c e (Cons t1 t2) = infer' c e t1 >>=
+    \tt1 -> case tt1 of
+              NatT -> infer' c e t2 >>= 
+                      \tt2 -> case tt2 of 
+                              ListT -> ret ListT
+                              _     -> matchError ListT tt2
+              _   -> matchError NatT tt1
+infer' c e (RecL t1 t2 t3) = infer' c e t1 >>= 
+    \tt1 -> infer' c e t2 >>=
+    \tt2 -> infer' c e t3 >>=
+    \tt3 -> case tt3 of
+              ListT -> case tt2 of
+                        FunT NatT (FunT ListT (FunT t t')) -> if t==tt1 && t'==tt1
+                                                              then ret t
+                                                              else matchError (FunT NatT (FunT ListT (FunT tt1 tt1))) tt2
+                        _                    -> matchError (FunT NatT (FunT ListT (FunT tt1 tt1))) tt2
+              _    -> matchError ListT tt3
