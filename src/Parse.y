@@ -80,9 +80,11 @@ Type    : TYPEE                        { EmptyT }
         | TYPENAT                      { NatT }
         | Type '->' Type               { FunT $1 $3 }
         | '(' Type ')'                 { $2 }
+        | TYPELIST                     { ListT }
 
 Defs    : Defexp Defs                  { $1 : $2 }
         |                              { [] }
+
      
 {
 
