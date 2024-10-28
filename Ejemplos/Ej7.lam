@@ -1,0 +1,3 @@
+def sumUno = \ls : ListT . RL nil (\x : NAT . \y : ListT . \z : ListT . cons (suc x) z) ls
+
+def sumPos = \ls : ListT . RL nil (\x : NAT . \y : ListT . \z : ListT . cons (suc x) (sumUno z)) ls
