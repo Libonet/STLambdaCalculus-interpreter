@@ -49,6 +49,13 @@ pp ii vs (Rec t1 t2 t3) =
     <+> parens (pp ii vs t2)
     <+> parens (pp ii vs t3)
 pp ii vs (Let t1 t2) = text "let" <+> text (vs !! ii) <> text "=" <> pp (ii + 1) vs t1 <+> text "in" <+> pp (ii + 1) vs t2
+pp ii vs (Nil) = text "[]"
+pp ii vs c@(Cons v t) = text "[" <> unrollCons ii vs c <> text "]"
+
+unrollCons ii vs (Nil)        = empty
+unrollCons ii vs (Cons v Nil) = pp ii vs v
+unrollCons ii vs (Cons v t)   = pp ii vs v <> text "," <+> unrollCons ii vs t
+unrollCons ii vs t            = pp ii vs t
 
 fromSucToInt :: Int -> [String] -> Term -> (Int, Doc, String)
 fromSucToInt ii vs Zero      = (0, text "0", "0")
@@ -70,6 +77,7 @@ isApp _         = False
 printType :: Type -> Doc
 printType EmptyT = text "E"
 printType NatT   = text "Nat"
+printType ListT  = text "List"
 printType (FunT t1 t2) =
   sep [parensIf (isFun t1) (printType t1), text "->", printType t2]
 
@@ -87,6 +95,9 @@ fv (Rec t1 t2 t3) = fv t1 ++ fv t2 ++ fv t3
 fv (t   :@: u       ) = fv t ++ fv u
 fv (Lam _   u       ) = fv u
 fv (Let t1 t2) = fv t1 ++ fv t2
+--fv (Nil) = []
+--fv (Cons v t1) = fv v ++ fv t1
+fv _ = ["Me olvide de un caso uwu"]
 
 ---
 printTerm :: Term -> Doc

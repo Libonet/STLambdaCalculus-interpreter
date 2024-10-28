@@ -72,6 +72,8 @@ NAbs    :: { LamTerm }
         
 Atom    :: { LamTerm }
         : VAR                          { LVar $1 }  
+        | '0'                          { LZero }
+        | nil                          { LNil }
         | '(' Exp ')'                  { $2 }
 
 Type    : TYPEE                        { EmptyT }

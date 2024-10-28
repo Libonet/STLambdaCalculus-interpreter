@@ -39,6 +39,9 @@ conversion' (LRec t1 t2 t3) tree = Rec (conversion' t1 tree) (conversion' t2 tre
 conversion' (LLet str t1 t2) tree = let tree1 = increaseDistance tree
                                         tree2 = addTotree str tree1
                                     in Let (conversion' t1 tree2) (conversion' t2 tree2)
+conversion' (LNil) tree = Nil
+conversion' (LCons t1 t2) tree = Cons (conversion' t1 tree) (conversion' t2 tree)
+conversion' (LRecL t1 t2 t3) tree = RecL (conversion' t1 tree) (conversion' t2 tree) (conversion' t3 tree)
 
 
 distance :: String -> BST String -> Int
@@ -72,6 +75,9 @@ sub i t (Suc t')              = Suc (sub i t t')
 sub i t (Rec t1 t2 t3)        = Rec (sub i t t1) (sub i t t2) (sub i t t3) 
 sub i t (Lam t'  u)           = Lam t' (sub (i + 1) t u)
 sub i t (Let t1 t2)           = Let (sub (i + 1) t t1) (sub (i + 1) t t2)
+sub i t (Nil)                 = Nil
+sub i t (Cons v t')           = Cons (sub i t v) (sub i t t')
+sub i t (RecL t1 t2 t3)       = RecL (sub i t t1) (sub i t t2) (sub i t t3) 
 
 -- convierte un valor en el término equivalente
 quote :: Value -> Term
@@ -101,9 +107,14 @@ eval nvs (t1 :@: t2) = let v1 = eval nvs t1
 eval nvs (Let t1 t2) = let v1 = eval nvs t1
                            t1' = quote v1
                        in eval nvs (sub 0 t1' t2)
-eval nvs (Cons t1 t2) = let v1 = quote $ eval nvs t1
-                            t2' = quote $ eval nvs t2
-                        in eval nvs (Cons v1 t2')
+eval nvs (Nil)        = VList VNil
+eval nvs (Cons t1 t2) = let v1 = eval nvs t1
+                            t2' = eval nvs t2
+                        in case t2' of
+                             VList t -> case v1 of
+                                        VNum v -> VList $ VCons v t
+                                        _      -> error "No se pudo evaluar Cons"
+                             _       -> error "No se pudo evaluar Cons"
 eval nvs (RecL t _ Nil) = eval nvs t
 eval nvs (RecL t1 t2 (Cons n lv)) = eval nvs (t2 :@: n :@: lv :@: RecL t1 t2 lv)
 eval nvs (RecL t1 t2 t3) = let t3' = quote $ eval nvs t3
