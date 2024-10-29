@@ -12,4 +12,4 @@ Ack :: Nat -> Nat -> Nat
 Ack = \m . R (succ) (\f x . \n. R (f 1) (\r y . f r) n) m
 -}
 
-def Ack = \m:NAT. R (\v:NAT.suc v) (\f:NAT->NAT.\x:NAT. \n:NAT. R (f (suc 0)) (\r:NAT.\y:NAT. f r) n) m
+def Ack = \m:Nat. R (\v:Nat.suc v) (\f:Nat->Nat.\x:Nat. \n:Nat. R (f (suc 0)) (\r:Nat.\y:Nat. f r) n) m

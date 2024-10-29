@@ -1,0 +1,24 @@
+/home/slibo/.ghcup/ghc/8.8.3/lib/ghc-8.8.3/include/ghcversion.h:
+  hash: 40d1b759f485f1cd5a54141a6412691ac2b76930507289a16a6a7b89b045b4d2
+/home/slibo/Programming/ALP/STLambdaCalculus-interpreter/.stack-work/dist/x86_64-linux/ghc-8.8.3/build/autogen/Paths_TP2.hs:
+  hash: 853b6f43a6adabfff54b9a00a91ad5f5c9935acf4556810a9a0abec3149f6609
+/home/slibo/Programming/ALP/STLambdaCalculus-interpreter/.stack-work/dist/x86_64-linux/ghc-8.8.3/build/autogen/cabal_macros.h:
+  hash: 9976a27848ab1f7c87830e63ed80c8e24031539809af958c7e980082e75b711b
+/home/slibo/Programming/ALP/STLambdaCalculus-interpreter/ChangeLog.md:
+  hash: b6db31e04d81c0e662bab2cbee2044b15c6a17422f0ed7b23ee85da5086cf956
+/home/slibo/Programming/ALP/STLambdaCalculus-interpreter/README.md:
+  hash: 7a6d5cb38ef1bd8af98a911f831eb4352fabde8c1b3ac75ae436dba070996555
+/home/slibo/Programming/ALP/STLambdaCalculus-interpreter/TP2.cabal:
+  hash: f04d8f29cbc8c63778d9cee6bc007623d0b8151d4c985c3db6104a0015e911a7
+/home/slibo/Programming/ALP/STLambdaCalculus-interpreter/package.yaml:
+  hash: 3f5d9d8a2a57469ed5359f4daf48ab7a74a6eb0299ce2def67ad968547b7ac61
+/home/slibo/Programming/ALP/STLambdaCalculus-interpreter/src/Common.hs:
+  hash: 8f1430a15eaf71904a72e68f21418014c6cf20f5dddef214fae0d8df610c748c
+/home/slibo/Programming/ALP/STLambdaCalculus-interpreter/src/Parse.y:
+  hash: 5abcaae3cd9cc28e47b3fa3d1cbfbadcd0ad0dbfad32eabbc3f528367f376792
+/home/slibo/Programming/ALP/STLambdaCalculus-interpreter/src/PrettyPrinter.hs:
+  hash: a7f302cf7f40ba92698b79672c46bd01de1e56665565ed3b482ca25aa31234a7
+/home/slibo/Programming/ALP/STLambdaCalculus-interpreter/src/Simplytyped.hs:
+  hash: cbd238fa882d52f9e046ca482cae4786d9ba7de9233282798de673624fad9413
+/usr/include/stdc-predef.h:
+  hash: 8db4f65e62cade8ae4d9b77960ee6aee093255acc1b637e3fb37d79179733b15

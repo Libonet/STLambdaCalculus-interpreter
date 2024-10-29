@@ -52,9 +52,9 @@ Defexp  : DEF VAR '=' Exp              { Def $2 $4 }
 Exp     :: { LamTerm }
         : '\\' VAR ':' Type '.' Exp    { LAbs $2 $4 $6 }
         | LET VAR '=' Exp IN Exp       { LLet $2 $4 $6 }
+        | NAbs                         { $1 }
         | Nat                          { $1 }
         | NatList                      { $1 }
-        | NAbs                         { $1 }
 
 Nat     :: { LamTerm }
         : '0'                          { LZero }
@@ -78,9 +78,9 @@ Atom    :: { LamTerm }
 
 Type    : TYPEE                        { EmptyT }
         | TYPENAT                      { NatT }
+        | TYPELIST                     { ListT }
         | Type '->' Type               { FunT $1 $3 }
         | '(' Type ')'                 { $2 }
-        | TYPELIST                     { ListT }
 
 Defs    : Defexp Defs                  { $1 : $2 }
         |                              { [] }
@@ -161,8 +161,8 @@ lexer cont s = case s of
                      "Línea "++(show line)++": No se puede reconocer "++(show $ take 10 unknown)++ "..."
                     where lexVar cs = case span isAlpha cs of
                               ("E",rest)    -> cont TTypeE rest
-                              ("NAT",rest)  -> cont TTypeNAT rest
-                              ("ListT",rest)-> cont TTypeLIST rest
+                              ("Nat",rest)  -> cont TTypeNAT rest
+                              ("List",rest)-> cont TTypeLIST rest
                               ("suc",rest)  -> cont TSuc rest
                               ("R",rest)    -> cont TRec rest
                               ("nil",rest)  -> cont TNil rest
