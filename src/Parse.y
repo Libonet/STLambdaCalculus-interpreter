@@ -41,7 +41,10 @@ import Data.Char
 %left '=' 
 %right '->'
 %right '\\' '.' LET IN
-%right suc cons RL R
+%right R
+%right RL
+%right cons
+%right suc
 
 %%
 
@@ -52,9 +55,9 @@ Defexp  : DEF VAR '=' Exp              { Def $2 $4 }
 Exp     :: { LamTerm }
         : '\\' VAR ':' Type '.' Exp    { LAbs $2 $4 $6 }
         | LET VAR '=' Exp IN Exp       { LLet $2 $4 $6 }
-        | NAbs                         { $1 }
         | Nat                          { $1 }
         | NatList                      { $1 }
+        | NAbs                         { $1 }
 
 Nat     :: { LamTerm }
         : '0'                          { LZero }
