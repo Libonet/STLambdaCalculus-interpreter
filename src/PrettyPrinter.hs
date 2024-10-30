@@ -37,6 +37,10 @@ pp ii vs (Lam t c) =
     <> printType t
     <> text ". "
     <> pp (ii + 1) vs c
+pp ii vs (Let t1 t2) = 
+  text "let" <+> text (vs !! ii) <>
+  text "=" <> pp (ii + 1) vs t1 <+>
+  text "in" <+> pp (ii + 1) vs t2
 pp ii vs (Zero)  = text "0"
 pp ii vs s@(Suc t) = let (n, doc, kind) = fromSucToInt ii vs s
                      in case kind of
@@ -48,7 +52,6 @@ pp ii vs (Rec t1 t2 t3) =
     <+> parens (pp ii vs t1)
     <+> parens (pp ii vs t2)
     <+> parens (pp ii vs t3)
-pp ii vs (Let t1 t2) = text "let" <+> text (vs !! ii) <> text "=" <> pp (ii + 1) vs t1 <+> text "in" <+> pp (ii + 1) vs t2
 pp ii vs (Nil) = text "[]"
 pp ii vs c@(Cons v t) = text "[" <> unrollCons ii vs c <> text "]"
 
@@ -95,9 +98,8 @@ fv (Rec t1 t2 t3) = fv t1 ++ fv t2 ++ fv t3
 fv (t   :@: u       ) = fv t ++ fv u
 fv (Lam _   u       ) = fv u
 fv (Let t1 t2) = fv t1 ++ fv t2
---fv (Nil) = []
---fv (Cons v t1) = fv v ++ fv t1
-fv _ = ["Me olvide de un caso uwu"]
+fv (Nil) = []
+fv (Cons v t1) = fv v ++ fv t1
 
 ---
 printTerm :: Term -> Doc
