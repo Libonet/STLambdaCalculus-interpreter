@@ -23,6 +23,7 @@ import Data.Char
     ')'      { TClose }
     '->'     { TArrow }
     '0'      { TZero }
+    num      { TNum $$ }
     suc      { TSuc }
     R        { TRec }
     nil      { TNil }
@@ -61,6 +62,7 @@ Exp     :: { LamTerm }
 
 Nat     :: { LamTerm }
         : '0'                          { LZero }
+        | num                          { rollSuc $1 }
         | suc Exp                      { LSuc $2 }
         | R Atom Atom Atom             { LRec $2 $3 $4 }
 
@@ -76,6 +78,7 @@ NAbs    :: { LamTerm }
 Atom    :: { LamTerm }
         : VAR                          { LVar $1 }  
         | '0'                          { LZero }
+        | num                          { rollSuc $1 }
         | nil                          { LNil }
         | '(' Exp ')'                  { $2 }
 
@@ -90,6 +93,9 @@ Defs    : Defexp Defs                  { $1 : $2 }
 
      
 {
+
+rollSuc 0 = LZero
+rollSuc n = LSuc (rollSuc (n-1))
 
 data ParseResult a = Ok a | Failed String
                      deriving Show                     
@@ -130,6 +136,7 @@ data Token = TVar String
                | TColon
                | TArrow
                | TZero
+               | TNum Int
                | TSuc
                | TRec
                | TNil
@@ -149,6 +156,7 @@ lexer cont s = case s of
                     (c:cs)
                           | isSpace c -> lexer cont cs
                           | isAlpha c -> lexVar (c:cs)
+                          | isDigit c -> lexNum (c:cs)
                     ('-':('-':cs)) -> lexer cont $ dropWhile ((/=) '\n') cs
                     ('{':('-':cs)) -> consumirBK 0 0 cont cs	
                     ('-':('}':cs)) -> \ line -> Failed $ "Línea "++(show line)++": Comentario no abierto"
@@ -183,6 +191,8 @@ lexer cont s = case s of
                                                   _ -> consumirBK (anidado-1) cl cont cs
                               ('\n':cs) -> consumirBK anidado (cl+1) cont cs
                               (_:cs) -> consumirBK anidado cl cont cs     
+                          lexNum cs = case span isDigit cs of
+                              (num,rest) -> cont (TNum (read num)) rest
                                            
 stmts_parse s = parseStmts s 1
 stmt_parse s = parseStmt s 1
