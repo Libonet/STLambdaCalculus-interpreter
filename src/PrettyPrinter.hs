@@ -37,10 +37,12 @@ pp ii vs (Lam t c) =
     <> printType t
     <> text ". "
     <> pp (ii + 1) vs c
+
 pp ii vs (Let t1 t2) = 
   text "let" <+> text (vs !! ii) <>
   text "=" <> pp (ii + 1) vs t1 <+>
   text "in" <+> pp (ii + 1) vs t2
+
 pp ii vs (Zero)  = text "0"
 pp ii vs s@(Suc t) = let (n, doc, kind) = fromSucToInt ii vs s
                      in case kind of
@@ -48,12 +50,18 @@ pp ii vs s@(Suc t) = let (n, doc, kind) = fromSucToInt ii vs s
                           "var" -> text (show n) <> text "+" <> doc
                           _     -> text (show n) <> text "+" <> parens doc
 pp ii vs (Rec t1 t2 t3) = 
-  text "R "
+  text "R"
     <+> parens (pp ii vs t1)
     <+> parens (pp ii vs t2)
     <+> parens (pp ii vs t3)
+
 pp ii vs (Nil) = text "[]"
 pp ii vs c@(Cons v t) = text "[" <> unrollCons ii vs c <> text "]"
+pp ii vs (RecL t1 t2 t3) =
+  text "RL"
+    <+> parens (pp ii vs t1)
+    <+> parens (pp ii vs t2)
+    <+> parens (pp ii vs t3)
 
 unrollCons ii vs (Nil)        = empty
 unrollCons ii vs (Cons v Nil) = pp ii vs v
@@ -92,14 +100,18 @@ isFun _          = False
 fv :: Term -> [String]
 fv (Bound _         ) = []
 fv (Free  (Global n)) = [n]
+fv (Lam _   u       ) = fv u
+fv (t   :@: u       ) = fv t ++ fv u
+
+fv (Let t1 t2) = fv t1 ++ fv t2
+
 fv (Zero) = []
 fv (Suc n) = fv n
 fv (Rec t1 t2 t3) = fv t1 ++ fv t2 ++ fv t3
-fv (t   :@: u       ) = fv t ++ fv u
-fv (Lam _   u       ) = fv u
-fv (Let t1 t2) = fv t1 ++ fv t2
+
 fv (Nil) = []
 fv (Cons v t1) = fv v ++ fv t1
+fv (RecL t1 t2 t3) = fv t1 ++ fv t2 ++ fv t3
 
 ---
 printTerm :: Term -> Doc
